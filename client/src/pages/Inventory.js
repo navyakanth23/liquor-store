@@ -7,17 +7,39 @@ function Inventory() {
     { id: 2, name: 'Whiskey', type: 'Whiskey', price: 40 },
   ]);
 
-  const [newProduct, setNewProduct] = useState({ name: '', type: '', price: '' });
+  const [formData, setFormData] = useState({ name: '', type: '', price: '' });
+  const [isEditing, setIsEditing] = useState(false);
+  const [editId, setEditId] = useState(null);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setNewProduct(prev => ({ ...prev, [name]: value }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleAdd = () => {
-    const id = Date.now(); // simple unique ID
-    setProducts(prev => [...prev, { ...newProduct, id, price: parseFloat(newProduct.price) }]);
-    setNewProduct({ name: '', type: '', price: '' });
+    const newProduct = {
+      id: Date.now(),
+      ...formData,
+      price: parseFloat(formData.price)
+    };
+    setProducts(prev => [...prev, newProduct]);
+    setFormData({ name: '', type: '', price: '' });
+  };
+
+  const handleEdit = (product) => {
+    setIsEditing(true);
+    setEditId(product.id);
+    setFormData({ name: product.name, type: product.type, price: product.price });
+  };
+
+  const handleUpdate = () => {
+    const updated = products.map(p =>
+      p.id === editId ? { ...p, ...formData, price: parseFloat(formData.price) } : p
+    );
+    setProducts(updated);
+    setIsEditing(false);
+    setEditId(null);
+    setFormData({ name: '', type: '', price: '' });
   };
 
   const handleDelete = (id) => {
@@ -33,7 +55,7 @@ function Inventory() {
           <Form.Control
             name="name"
             placeholder="Product Name"
-            value={newProduct.name}
+            value={formData.name}
             onChange={handleChange}
           />
         </Form.Group>
@@ -41,7 +63,7 @@ function Inventory() {
           <Form.Control
             name="type"
             placeholder="Product Type"
-            value={newProduct.type}
+            value={formData.type}
             onChange={handleChange}
           />
         </Form.Group>
@@ -50,11 +72,15 @@ function Inventory() {
             name="price"
             placeholder="Price"
             type="number"
-            value={newProduct.price}
+            value={formData.price}
             onChange={handleChange}
           />
         </Form.Group>
-        <Button variant="success" onClick={handleAdd}>Add Product</Button>
+        {isEditing ? (
+          <Button variant="warning" onClick={handleUpdate}>Update Product</Button>
+        ) : (
+          <Button variant="success" onClick={handleAdd}>Add Product</Button>
+        )}
       </Form>
 
       <Table striped bordered hover>
@@ -73,6 +99,7 @@ function Inventory() {
               <td>{p.type}</td>
               <td>{p.price}</td>
               <td>
+                <Button variant="info" size="sm" className="me-2" onClick={() => handleEdit(p)}>Edit</Button>
                 <Button variant="danger" size="sm" onClick={() => handleDelete(p.id)}>Delete</Button>
               </td>
             </tr>
